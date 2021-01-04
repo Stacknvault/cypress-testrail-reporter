@@ -4,13 +4,28 @@ import { TestRail } from './testrail';
 import { titleToCaseIds } from './shared';
 import { Status, TestRailResult } from './testrail.interface';
 const chalk = require('chalk');
-
+export class TestRailSingleton {
+  private static testRail: TestRail;
+  public static results: TestRailResult[] = [];
+  public static getTestRail(reporterOptions: any){
+    if (!TestRailSingleton.testRail){
+      console.log('Defining singleton!!')
+      TestRailSingleton.testRail = new TestRail(reporterOptions);
+      const executionDateTime = moment().format('MMM Do YYYY, HH:mm (Z)');
+      const name = `${reporterOptions.runName || 'NEW Automated test run'} ${executionDateTime}`;
+      const description = 'For the Cypress run visit https://dashboard.cypress.io/#/projects/runs';
+      TestRailSingleton.testRail.createRun(name, description);
+    }
+    return TestRailSingleton.testRail;
+  }
+}
 export class CypressTestRailReporter extends reporters.Spec {
-  private results: TestRailResult[] = [];
-  private testRail: TestRail;
+  // private results: TestRailResult[] = [];
+  // private testRail: TestRail;
 
   constructor(runner: any, options: any) {
     super(runner);
+    console.log('coming runner and options', runner, options);
 
     let reporterOptions = options.reporterOptions;
 
@@ -18,21 +33,25 @@ export class CypressTestRailReporter extends reporters.Spec {
       reporterOptions.password = process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD;
     }
 
-    this.testRail = new TestRail(reporterOptions);
+    // testRail = new TestRail(reporterOptions);
     this.validate(reporterOptions, 'host');
     this.validate(reporterOptions, 'username');
     this.validate(reporterOptions, 'password');
     this.validate(reporterOptions, 'projectId');
     this.validate(reporterOptions, 'suiteId');
 
+    const testRail = TestRailSingleton.getTestRail(reporterOptions);
+
     runner.on('start', () => {
-      const executionDateTime = moment().format('MMM Do YYYY, HH:mm (Z)');
-      const name = `${reporterOptions.runName || 'Automated test run'} ${executionDateTime}`;
-      const description = 'For the Cypress run visit https://dashboard.cypress.io/#/projects/runs';
-      this.testRail.createRun(name, description);
+      console.log('start');
+      // const executionDateTime = moment().format('MMM Do YYYY, HH:mm (Z)');
+      // const name = `${reporterOptions.runName || 'Automated test run'} ${executionDateTime}`;
+      // const description = 'For the Cypress run visit https://dashboard.cypress.io/#/projects/runs';
+      // testRail.createRun(name, description);
     });
 
     runner.on('pass', test => {
+      console.log('pass');
       const caseIds = titleToCaseIds(test.title);
       if (caseIds.length > 0) {
         const results = caseIds.map(caseId => {
@@ -43,11 +62,12 @@ export class CypressTestRailReporter extends reporters.Spec {
             elapsed: `${test.duration/1000}s`
           };
         });
-        this.results.push(...results);
+        TestRailSingleton.results.push(...results);
       }
     });
 
     runner.on('fail', test => {
+      console.log('fail');
       const caseIds = titleToCaseIds(test.title);
       if (caseIds.length > 0) {
         const results = caseIds.map(caseId => {
@@ -57,26 +77,58 @@ export class CypressTestRailReporter extends reporters.Spec {
             comment: `${test.err.message}`,
           };
         });
-        this.results.push(...results);
+        TestRailSingleton.results.push(...results);
       }
     });
 
     runner.on('end', () => {
-      if (this.results.length == 0) {
-        console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));
-        console.warn(
-          '\n',
-          'No testcases were matched. Ensure that your tests are declared correctly and matches Cxxx',
-          '\n'
-        );
-        this.testRail.deleteRun();
+      console.log(`Ended test, ${TestRailSingleton.results.length} cases executed so far`);
+      // if (TestRailSingleton.results.length == 0) {
+      //   console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));
+      //   console.warn(
+      //     '\n',
+      //     'No testcases were matched. Ensure that your tests are declared correctly and matches Cxxx',
+      //     '\n'
+      //   );
+      //   testRail.deleteRun();
 
-        return;
+      //   return;
+      // }
+
+      // // publish test cases results & close the run
+      // if (TestRailSingleton.results.length===13){
+      //   console.log('We got all the cases executed. Closing...')
+      //   testRail.publishResults(TestRailSingleton.results)
+      //     .then(() => testRail.closeRun());
+      // }else{
+      //   console.log('Can\'t close yet, pending cases')
+      // }
+    });
+    process.on('SIGTERM', function(code) {
+      console.log(`About to exit with code ${code}`);
+      const testRail = TestRailSingleton.getTestRail(reporterOptions);
+      if (code === 0){
+        console.log('This is the right exit code');
+        if (TestRailSingleton.results.length == 0) {
+          console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));
+          console.warn(
+            '\n',
+            'No testcases were matched. Ensure that your tests are declared correctly and matches Cxxx',
+            '\n'
+          );
+          testRail.deleteRun();
+
+          return;
+        }
+        console.log('Publishing results');
+        // publish test cases results & close the run
+        testRail.publishResults(TestRailSingleton.results)
+          .then((result) => {
+            console.log('publish result', result);
+            testRail.closeRun();
+          })
+          .catch((error)=>console.log('publish error', error));
       }
-
-      // publish test cases results & close the run
-      this.testRail.publishResults(this.results)
-        .then(() => this.testRail.closeRun());
     });
   }
 

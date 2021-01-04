@@ -1,7 +1,7 @@
 {
   "name": "cypress-testrail-reporter",
-  "version": "1.2.3",
-  "description": "A Testrail reporter for cypress including TestRail API basic library",
+  "version": "1.2.4",
+  "description": "A Testrail reporter for cypress including TestRail API basic library. This is a form from cypress-testrail-reporter",
   "main": "index.js",
   "private": false,
   "keywords": [
@@ -17,10 +17,10 @@
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Vivify-Ideas/cypress-testrail-reporter.git"
+    "url": "https://github.com/Stacknvault/cypress-testrail-reporter.git"
   },
   "bugs": {
-    "url": "https://github.com/Vivify-Ideas/cypress-testrail-reporter/issues"
+    "url": "https://github.com/Stacknvault/cypress-testrail-reporter/issues"
   },
   "scripts": {
     "tsc": "tsc",
@@ -40,6 +40,6 @@
     "@types/node": "^6.0.58",
     "chai": "^3.5.0",
     "rimraf": "^2.5.4",
-    "typescript": "^2.1.4"
+    "typescript": "^4.1.3"
   }
 }
