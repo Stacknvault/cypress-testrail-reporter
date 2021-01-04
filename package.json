@@ -1,17 +1,18 @@
 {
-  "name": "cypress-testrail-reporter",
-  "version": "1.2.4",
-  "description": "A Testrail reporter for cypress including TestRail API basic library. This is a form from cypress-testrail-reporter",
+  "name": "cypress-testrail-cross-reporter",
+  "version": "1.2.14",
+  "description": "A Testrail reporter for cypress including TestRail API basic library. This is a fork from cypress-testrail-reporter from Milutin Savovic (mickosavovic@gmail.com)",
   "main": "index.js",
   "private": false,
   "keywords": [
     "cypress",
     "testrail",
+    "cross",
     "reporter"
   ],
   "author": {
-    "name": "Milutin Savovic",
-    "email": "mickosavovic@gmail.com"
+    "name": "Andoni Arostegui",
+    "email": "andoni.arostegui@stacknvault.com"
   },
   "license": "MIT",
   "readmeFilename": "README.md",

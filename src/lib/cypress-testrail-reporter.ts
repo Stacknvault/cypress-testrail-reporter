@@ -2,18 +2,19 @@ import { reporters } from 'mocha';
 import * as moment from 'moment';
 import { TestRail } from './testrail';
 import { titleToCaseIds } from './shared';
-import { Status, TestRailResult } from './testrail.interface';
+import { Status, TestRailOptions, TestRailResult } from './testrail.interface';
 const chalk = require('chalk');
 export class TestRailSingleton {
   private static testRail: TestRail;
   public static results: TestRailResult[] = [];
-  public static getTestRail(reporterOptions: any){
+  public static getTestRail(reporterOptions: TestRailOptions){
     if (!TestRailSingleton.testRail){
-      console.log('Defining singleton!!')
       TestRailSingleton.testRail = new TestRail(reporterOptions);
       const executionDateTime = moment().format('MMM Do YYYY, HH:mm (Z)');
       const name = `${reporterOptions.runName || 'NEW Automated test run'} ${executionDateTime}`;
       const description = 'For the Cypress run visit https://dashboard.cypress.io/#/projects/runs';
+      console.log('Creating the testrail instance with the testrun id', reporterOptions.runId)
+      TestRailSingleton.testRail.runId = reporterOptions.runId;
       // TestRailSingleton.testRail.createRun(name, description);
     }
     return TestRailSingleton.testRail;
@@ -25,8 +26,6 @@ export class CypressTestRailReporter extends reporters.Spec {
 
   constructor(runner: any, options: any) {
     super(runner);
-    console.log('coming runner and options', runner, options);
-
     let reporterOptions = options.reporterOptions;
 
     if (process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD) {
@@ -82,8 +81,6 @@ export class CypressTestRailReporter extends reporters.Spec {
     });
 
     runner.on('end', () => {
-      console.log(`Ended test, ${TestRailSingleton.results.length} cases executed so far`);
-      
       // publish test cases results & close the run
       testRail.publishResults(TestRailSingleton.results)
         .then(() => console.log('Results published'))

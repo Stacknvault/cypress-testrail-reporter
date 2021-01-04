@@ -4,12 +4,13 @@ import { TestRailOptions, TestRailResult } from './testrail.interface';
 
 export class TestRail {
   private base: String;
-  private runId: Number;
+  public runId: Number;
   private includeAll: Boolean = true;
   private caseIds: Number[] = [];
 
   constructor(private options: TestRailOptions) {
     this.base = `${options.host}/index.php?/api/v2`;
+    this.runId = options.runId;
   }
 
   public getCases () {
@@ -34,30 +35,37 @@ export class TestRail {
   }
 
   public async createRun (name: string, description: string) {
-    if (this.options.includeAllInTestRun === false){
-      this.includeAll = false;
-      this.caseIds =  await this.getCases();
-    }  
-    axios({
-      method: 'post',
-      url: `${this.base}/add_run/${this.options.projectId}`,
-      headers: { 'Content-Type': 'application/json' },
-      auth: {
-        username: this.options.username,
-        password: this.options.password,
-      },
-      data: JSON.stringify({
-        suite_id: this.options.suiteId,
-        name,
-        description,
-        include_all: this.includeAll,
-        case_ids: this.caseIds
-      }),
-    })
-      .then(response => {
-        this.runId = response.data.id;
+    return new Promise(async(resolve, reject)=>{
+      if (this.options.includeAllInTestRun === false){
+        this.includeAll = false;
+        this.caseIds =  await this.getCases();
+      }  
+      axios({
+        method: 'post',
+        url: `${this.base}/add_run/${this.options.projectId}`,
+        headers: { 'Content-Type': 'application/json' },
+        auth: {
+          username: this.options.username,
+          password: this.options.password,
+        },
+        data: JSON.stringify({
+          suite_id: this.options.suiteId,
+          name,
+          description,
+          include_all: this.includeAll,
+          case_ids: this.caseIds
+        }),
       })
-      .catch(error => console.error(error));
+        .then(response => {
+          this.runId = response.data.id;
+          resolve(this.runId);
+        })
+        .catch(error => {
+          console.error(error)
+          reject(error);
+        });
+      });
+
   }
 
   public deleteRun() {
@@ -73,15 +81,17 @@ export class TestRail {
   }
 
   public publishResults(results: TestRailResult[]) {
+    const data = JSON.stringify({ results });
+    const url = `${this.base}/add_results_for_cases/${this.runId}`;
     return axios({
       method: 'post',
-      url: `${this.base}/add_results_for_cases/${this.runId}`,
+      url: url,
       headers: { 'Content-Type': 'application/json' },
       auth: {
         username: this.options.username,
         password: this.options.password,
       },
-      data: JSON.stringify({ results }),
+      data: data,
     })
       .then(response => {
         console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));

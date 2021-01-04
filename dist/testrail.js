@@ -45,6 +45,7 @@ var TestRail = /** @class */ (function () {
         this.includeAll = true;
         this.caseIds = [];
         this.base = options.host + "/index.php?/api/v2";
+        this.runId = options.runId;
     }
     TestRail.prototype.getCases = function () {
         var url = this.base + "/get_cases/" + this.options.projectId + "&suite_id=" + this.options.suiteId;
@@ -68,41 +69,50 @@ var TestRail = /** @class */ (function () {
     };
     TestRail.prototype.createRun = function (name, description) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
             var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        if (!(this.options.includeAllInTestRun === false)) return [3 /*break*/, 2];
-                        this.includeAll = false;
-                        _a = this;
-                        return [4 /*yield*/, this.getCases()];
-                    case 1:
-                        _a.caseIds = _b.sent();
-                        _b.label = 2;
-                    case 2:
-                        axios({
-                            method: 'post',
-                            url: this.base + "/add_run/" + this.options.projectId,
-                            headers: { 'Content-Type': 'application/json' },
-                            auth: {
-                                username: this.options.username,
-                                password: this.options.password,
-                            },
-                            data: JSON.stringify({
-                                suite_id: this.options.suiteId,
-                                name: name,
-                                description: description,
-                                include_all: this.includeAll,
-                                case_ids: this.caseIds
-                            }),
-                        })
-                            .then(function (response) {
-                            _this.runId = response.data.id;
-                        })
-                            .catch(function (error) { return console.error(error); });
-                        return [2 /*return*/];
-                }
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
+                        var _a;
+                        var _this = this;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    if (!(this.options.includeAllInTestRun === false)) return [3 /*break*/, 2];
+                                    this.includeAll = false;
+                                    _a = this;
+                                    return [4 /*yield*/, this.getCases()];
+                                case 1:
+                                    _a.caseIds = _b.sent();
+                                    _b.label = 2;
+                                case 2:
+                                    axios({
+                                        method: 'post',
+                                        url: this.base + "/add_run/" + this.options.projectId,
+                                        headers: { 'Content-Type': 'application/json' },
+                                        auth: {
+                                            username: this.options.username,
+                                            password: this.options.password,
+                                        },
+                                        data: JSON.stringify({
+                                            suite_id: this.options.suiteId,
+                                            name: name,
+                                            description: description,
+                                            include_all: this.includeAll,
+                                            case_ids: this.caseIds
+                                        }),
+                                    })
+                                        .then(function (response) {
+                                        _this.runId = response.data.id;
+                                        resolve(_this.runId);
+                                    })
+                                        .catch(function (error) {
+                                        console.error(error);
+                                        reject(error);
+                                    });
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); })];
             });
         });
     };
@@ -119,15 +129,17 @@ var TestRail = /** @class */ (function () {
     };
     TestRail.prototype.publishResults = function (results) {
         var _this = this;
+        var data = JSON.stringify({ results: results });
+        var url = this.base + "/add_results_for_cases/" + this.runId;
         return axios({
             method: 'post',
-            url: this.base + "/add_results_for_cases/" + this.runId,
+            url: url,
             headers: { 'Content-Type': 'application/json' },
             auth: {
                 username: this.options.username,
                 password: this.options.password,
             },
-            data: JSON.stringify({ results: results }),
+            data: data,
         })
             .then(function (response) {
             console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));

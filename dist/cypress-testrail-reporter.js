@@ -25,12 +25,13 @@ var TestRailSingleton = /** @class */ (function () {
     }
     TestRailSingleton.getTestRail = function (reporterOptions) {
         if (!TestRailSingleton.testRail) {
-            console.log('Defining singleton!!');
             TestRailSingleton.testRail = new testrail_1.TestRail(reporterOptions);
             var executionDateTime = moment().format('MMM Do YYYY, HH:mm (Z)');
             var name_1 = (reporterOptions.runName || 'NEW Automated test run') + " " + executionDateTime;
             var description = 'For the Cypress run visit https://dashboard.cypress.io/#/projects/runs';
-            TestRailSingleton.testRail.createRun(name_1, description);
+            console.log('Creating the testrail instance with the testrun id', reporterOptions.runId);
+            TestRailSingleton.testRail.runId = reporterOptions.runId;
+            // TestRailSingleton.testRail.createRun(name, description);
         }
         return TestRailSingleton.testRail;
     };
@@ -44,7 +45,6 @@ var CypressTestRailReporter = /** @class */ (function (_super) {
     // private testRail: TestRail;
     function CypressTestRailReporter(runner, options) {
         var _this = _super.call(this, runner) || this;
-        console.log('coming runner and options', runner, options);
         var reporterOptions = options.reporterOptions;
         if (process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD) {
             reporterOptions.password = process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD;
@@ -95,46 +95,10 @@ var CypressTestRailReporter = /** @class */ (function (_super) {
             }
         });
         runner.on('end', function () {
-            console.log("Ended test, " + TestRailSingleton.results.length + " cases executed so far");
-            // if (TestRailSingleton.results.length == 0) {
-            //   console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));
-            //   console.warn(
-            //     '\n',
-            //     'No testcases were matched. Ensure that your tests are declared correctly and matches Cxxx',
-            //     '\n'
-            //   );
-            //   testRail.deleteRun();
-            //   return;
-            // }
-            // // publish test cases results & close the run
-            // if (TestRailSingleton.results.length===13){
-            //   console.log('We got all the cases executed. Closing...')
-            //   testRail.publishResults(TestRailSingleton.results)
-            //     .then(() => testRail.closeRun());
-            // }else{
-            //   console.log('Can\'t close yet, pending cases')
-            // }
-        });
-        process.on('SIGTERM', function (code) {
-            console.log("About to exit with code " + code);
-            var testRail = TestRailSingleton.getTestRail(reporterOptions);
-            if (code === 0) {
-                console.log('This is the right exit code');
-                if (TestRailSingleton.results.length == 0) {
-                    console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));
-                    console.warn('\n', 'No testcases were matched. Ensure that your tests are declared correctly and matches Cxxx', '\n');
-                    testRail.deleteRun();
-                    return;
-                }
-                console.log('Publishing results');
-                // publish test cases results & close the run
-                testRail.publishResults(TestRailSingleton.results)
-                    .then(function (result) {
-                    console.log('publish result', result);
-                    testRail.closeRun();
-                })
-                    .catch(function (error) { return console.log('publish error', error); });
-            }
+            // publish test cases results & close the run
+            testRail.publishResults(TestRailSingleton.results)
+                .then(function () { return console.log('Results published'); })
+                .catch(console.error);
         });
         return _this;
     }
