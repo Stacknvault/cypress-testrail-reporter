@@ -107,6 +107,7 @@ export class TestRail {
   }
 
   public closeRun() {
+    console.log('closing...')
     axios({
       method: 'post',
       url: `${this.base}/close_run/${this.runId}`,
@@ -118,5 +119,6 @@ export class TestRail {
     })
       .then(() => console.log('- Test run closed successfully'))
       .catch(error => console.error(error));
+      console.log('closed...')
   }
 }

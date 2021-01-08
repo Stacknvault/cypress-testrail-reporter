@@ -45,6 +45,7 @@ var CypressTestRailReporter = /** @class */ (function (_super) {
     // private testRail: TestRail;
     function CypressTestRailReporter(runner, options) {
         var _this = _super.call(this, runner) || this;
+        console.log("xxxxxx", options);
         var reporterOptions = options.reporterOptions;
         if (process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD) {
             reporterOptions.password = process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD;
@@ -97,7 +98,10 @@ var CypressTestRailReporter = /** @class */ (function (_super) {
         runner.on('end', function () {
             // publish test cases results & close the run
             testRail.publishResults(TestRailSingleton.results)
-                .then(function () { return console.log('Results published'); })
+                .then(function () {
+                console.log('Results published');
+                TestRailSingleton.results = [];
+            })
                 .catch(console.error);
         });
         return _this;

@@ -26,6 +26,7 @@ export class CypressTestRailReporter extends reporters.Spec {
 
   constructor(runner: any, options: any) {
     super(runner);
+    console.log("xxxxxx", options);
     let reporterOptions = options.reporterOptions;
 
     if (process.env.CYPRESS_TESTRAIL_REPORTER_PASSWORD) {
@@ -83,7 +84,10 @@ export class CypressTestRailReporter extends reporters.Spec {
     runner.on('end', () => {
       // publish test cases results & close the run
       testRail.publishResults(TestRailSingleton.results)
-        .then(() => console.log('Results published'))
+        .then(() => {
+          console.log('Results published')
+          TestRailSingleton.results = [];
+        })
         .catch(console.error);
     });
 

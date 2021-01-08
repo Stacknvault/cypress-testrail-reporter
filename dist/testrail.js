@@ -148,6 +148,7 @@ var TestRail = /** @class */ (function () {
             .catch(function (error) { return console.error(error); });
     };
     TestRail.prototype.closeRun = function () {
+        console.log('closing...');
         axios({
             method: 'post',
             url: this.base + "/close_run/" + this.runId,
@@ -159,6 +160,7 @@ var TestRail = /** @class */ (function () {
         })
             .then(function () { return console.log('- Test run closed successfully'); })
             .catch(function (error) { return console.error(error); });
+        console.log('closed...');
     };
     return TestRail;
 }());
